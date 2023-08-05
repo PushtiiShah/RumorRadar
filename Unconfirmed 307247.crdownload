@@ -1,0 +1,108 @@
+const express = require("express")
+const app = express()
+const bcrypt = require("bcrypt") //bcrypt is used to make hash of password
+const mysql = require("mysql")
+
+const port=3000;
+app.use(express.json())  //required to send data in json format
+
+
+const db = mysql.createPool({  //connecting to mysqldb
+  connectionLimit: 100,
+  host: "127.0.0.1",       //This is your localhost IP
+  user: "newuser",         // "newuser" created in Step 1(e)
+  password: "password1#",  // password for the new user
+  database: "userDB",      // Database name
+  port: "3306"             // port name, "3306" 
+})
+db.getConnection( (err, connection)=> {
+  if (err) throw (err)
+  console.log ("DB connected successful: " + connection.threadId)
+})
+ 
+
+app.listen(port, 
+  ()=> console.log(`Server Started on port http://localhost:${port}...`))
+
+  app.get('/', (req, res) => { // a localhost:3000 endpoint only displaying name doing nothing else
+    res.send('Hello Saleh!')
+  }) 
+
+
+  // This is '/register' endpoint to create a new user that adds user's name,email and hashedpass in mysql db
+
+  app.post("/register", async (req,res) => {  
+    
+    const user = req.body.name;
+    const email=req.body.email;
+    const hashedPassword = await bcrypt.hash(req.body.password,10);
+    db.getConnection( async (err, connection) => {
+     if (err) throw (err)
+     const sqlSearch = "SELECT * FROM userTable WHERE user = ?"
+     const search_query = mysql.format(sqlSearch,[user])
+     const sqlInsert = "INSERT INTO userTable VALUES (0,?,?,?)"
+     const insert_query = mysql.format(sqlInsert,[user, hashedPassword,email])
+     // ? will be replaced by values
+     // ?? will be replaced by string
+     await connection.query (search_query, async (err, result) => {
+      if (err) throw (err)
+      console.log("------> Search Results")
+      console.log(result.length)
+      if (result.length != 0) {
+       connection.release()
+       console.log("------> User already exists")
+       res.sendStatus(409) 
+      } 
+      else {
+       await connection.query (insert_query, (err, result)=> {
+       connection.release()
+       if (err) throw (err)
+       console.log ("--------> Created new User")
+       console.log(result.insertId)
+       res.sendStatus(201)
+      })
+     }
+    })
+    }) 
+    }) 
+
+
+    // A '/login' endpoint to authenticate a registered user
+
+    app.post("/login", (req, res)=> {
+      const email = req.body.email
+      const password = req.body.password
+      db.getConnection ( async (err, connection)=> {
+       if (err) throw (err)
+       const sqlSearch = "Select * from userTable where userEmail = ?"
+       const search_query = mysql.format(sqlSearch,[email])
+       await connection.query (search_query, async (err, result) => {
+        connection.release()
+        
+        if (err) throw (err)
+        if (result.length == 0) {
+         console.log("--------> User does not exist")
+         res.sendStatus(404)
+        } 
+        else {
+           const hashedPassword = result[0].password
+           //get the hashedPassword from result
+          if (await bcrypt.compare(password, hashedPassword)) {  //a bcrypt function to compare hashedpass from db with entered password
+          console.log("---------> Login Successful")
+          await connection.query(`Select user from userTable where userEmail = '${email}' `,async(err,result)=>{
+            if(err)throw(err)
+            else{
+            let user=result[0].user
+            res.send(`${user} is logged in!`)
+           }
+           })
+          // res.send(`${email} is logged in!`)
+          } 
+          else {
+          console.log("---------> Password Incorrect")
+          res.send("Password incorrect!")
+          } //end of bcrypt.compare()
+        }
+       }) 
+      }) 
+      }) 

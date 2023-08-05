@@ -1,0 +1,33 @@
+import matplotlib.pyplot as plt
+
+# Graph A
+plt.plot([0, 1], [0, 0], 'k')  # Line segment
+plt.plot(1, 0, 'o', fillstyle='none')  # Open circle
+plt.fill_between([1, float('inf')], [0, 0], alpha=0.3)  # Shaded region
+plt.ylim(-1, 1)
+plt.xlim(-1, 3)
+plt.show()
+
+# Graph B
+plt.plot([0, 1], [0, 0], 'k')  # Line segment
+plt.plot(1, 0, 'o')  # Closed circle
+plt.fill_between([1, float('inf')], [0, 0], alpha=0.3)  # Shaded region
+plt.ylim(-1, 1)
+plt.xlim(-1, 3)
+plt.show()
+
+# Graph C
+plt.plot([-1, 0], [0, 0], 'k')  # Line segment
+plt.plot(0, 0, 'o', fillstyle='none')  # Open circle
+plt.fill_between([-1, 0], [0, 0], alpha=0.3)  # Shaded region
+plt.ylim(-1, 1)
+plt.xlim(-3, 1)
+plt.show()
+
+# Graph D
+plt.plot([-1, 0], [0, 0], 'k')  # Line segment
+plt.plot(0, 0, 'o')  # Closed circle
+plt.fill_between([-1, 0], [0, 0], alpha=0.3)  # Shaded region
+plt.ylim(-1, 1)
+plt.xlim(-3, 1)
+plt.show()
